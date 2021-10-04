@@ -3,9 +3,11 @@ import torch
 
 def ranges_slices(batch):
     """
-
+    Build the slices and ranges for the ranges and slices for the batch.
     :param batch:
     :return:
+    ranges: torch.Tensor, the diagonal of the batch.
+    slices: torch.Tensor, the slices of the batch
     """
     Ns = batch.bincount()
     indices = Ns.cumsums(0)
@@ -13,7 +15,7 @@ def ranges_slices(batch):
     ranges = (
         torch.stack((ranges[:-1], ranges[1:])).t().int().contiguous().to(batch.device)
     )
-    slices = (1 + torch.arange(len(Ns))).int.to(batch.device)
+    slices = (1 + torch.arange(len(Ns))).int().to(batch.device)
     return ranges, slices
 
 
