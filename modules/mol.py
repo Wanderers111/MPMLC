@@ -39,7 +39,7 @@ def conformation_generation(smi, force_field_optimization=True, RmsThresh=0.5, n
             distance = np.sqrt(
                 ((conformer.GetPositions() - conformers_list[i].GetPositions()) ** 2).sum() / mol.GetNumAtoms()
             )
-            if distance < 0.5:
+            if distance < RmsThresh:
                 break
         else:
             mol_clone.AddConformer(conformer)
