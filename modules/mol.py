@@ -6,7 +6,7 @@ from rdkit.Chem import AllChem
 conformation_kwargs = {
     'maxAttempts': 100,
     'useExpTorsionAnglePrefs': True,
-    'useBasicKnowledge': True
+    'useBasicKnowledge': True,
 }
 atom_id = [6, 1, 8, 7, 15, 16, 34, 17, 9, 35]
 
@@ -31,7 +31,19 @@ def conformation_generation(smi, force_field_optimization=True, RmsThresh=0.5, n
     AllChem.AlignMolConformers(mol, RMSlist=rms_list)
     if force_field_optimization:
         AllChem.MMFFOptimizeMolecule(mol)
-    return mol, rms_list
+    conformers_list = list(mol.GetConformers())
+    mol_clone = Chem.Mol(mol)
+    mol_clone.RemoveAllConformers()
+    for idx, conformer in enumerate(conformers_list):
+        for i in range(idx + 1, len(conformers_list)):
+            distance = np.sqrt(
+                ((conformer.GetPositions() - conformers_list[i].GetPositions()) ** 2).sum() / mol.GetNumAtoms()
+            )
+            if distance < 0.5:
+                break
+        else:
+            mol_clone.AddConformer(conformer)
+    return mol_clone
 
 
 def get_mol_type_one_hot(mol):
