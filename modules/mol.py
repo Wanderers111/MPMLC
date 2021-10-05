@@ -20,7 +20,6 @@ def conformation_generation(smi, force_field_optimization=True, RmsThresh=0.5, n
     :param numConfs: int, the maximum number of the conformations should be generated.
     :return:
     mol: Rdkit.mol object.
-    rms_list: List, The list containing rmsds.
     """
     mol = Chem.MolFromSmiles(smi)
     mol = Chem.AddHs(mol)
@@ -43,6 +42,7 @@ def conformation_generation(smi, force_field_optimization=True, RmsThresh=0.5, n
                 break
         else:
             mol_clone.AddConformer(conformer)
+    del mol
     return mol_clone
 
 
