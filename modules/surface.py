@@ -6,28 +6,32 @@ import torch
 from pykeops.torch import LazyTensor
 
 
-# The CSD atom radius for Csp, Csp2, Csp3, H, O, N, P, S, Se, Cl, F, Br. Dalton Transactions 2832-2838
-atom_radius = [69, 73, 76, 31, 66, 71, 107, 105, 120, 102, 57, 120]
-
-
-def soft_distance(x, y, batch_x, batch_y, smoothness=0.01, chemical_features=None):
+def soft_distance(x, y, atomtype, smoothness=0.01, chemical_features=None):
     """
 
     :param smoothness:
     :param x:
     :param y:
-    :param batch_x:
-    :param batch_y:
+    :param atomtype:
     :param chemical_features:
     :return:
     """
     # Return the distances between the atoms and the neighborhood points
     x_i = LazyTensor(x[:, None, :])  # (N * 1 * 3) atom coordinates
     y_i = LazyTensor(y[None, :, :])  # (1 * M * 3) neighborhoods points coordinates.
-    D_ij = ((x_i - y_i) ** 2).sum(-1)  #
+    D_ij = ((x_i - y_i) ** 2).sum(-1)  # Calculating the distance of the x_i and y_i
 
-    # Divide the batches, using block-diagonal sparsity
-
+    # !TODO: Divide the batches, using block-diagonal sparsity
+    if chemical_features:
+        # Get the atom radius and normalizing the atom radius.
+        # The CSD atom radius for Csp, Csp2, Csp3, H, O, N, P, S, Se, Cl, F, Br. Dalton Transactions 2832-2838
+        atom_radius = torch.FloatTensor([69, 73, 76, 31, 66, 71, 107, 105, 120, 102, 57, 120], device=x.device)
+        atom_radius = atom_radius / atom_radius.min()
+        # Get the normalized radius of the batch atoms.
+        molecule_radius = torch.sum(smoothness * atomtype * atom_radius, dim=1, keepdim=False)
+        molecule_radius_i = molecule_radius[:, None, None]
+        sigma_molecule = (-1*D_ij).exp() * molecule_radius_i / (-1*D_ij).exp()
+        smooth_distance_function = -1 * sigma_molecule * (-1*D_ij/molecule_radius_i).exp().sum(-1).log()
     return D_ij
 
 
@@ -58,8 +62,8 @@ class MoleculeAtomsToPointNormal:
         z = self.atoms[:, None, :] + 10 * self.theta_distance * torch.randn(n_atoms, self.B, coord_dim)
         z = z.view(-1, coord_dim)
         # Make the tensor's store continuous in the device
-        atoms = self.atoms.detach().contigous()
-        z = z.detach().contigous()
+        atoms = self.atoms.detach().contiguous()
+        z = z.detach().contiguous()
         return atoms, z
 
     def descend(self):
