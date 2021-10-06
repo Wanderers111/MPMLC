@@ -27,11 +27,11 @@ def soft_distance(x, y, atomtype, smoothness=0.01):
     atom_radius = atom_radius / atom_radius.min()
     # Get the normalized radius of the batch atoms.
     molecule_radius = torch.sum(smoothness * atomtype * atom_radius, dim=1, keepdim=False)
-    molecule_radius_i = LazyTensor(molecule_radius[:, None, None])
-    sigma_molecule = ((-1 * D_ij.sqrt()).exp() * molecule_radius_i).sum(0) / \
+    sigma_molecule = ((-1 * D_ij.sqrt()).exp() * molecule_radius).sum(0) / \
                      ((-1 * D_ij.sqrt()).exp()).sum(0)
-    t = (-D_ij.sqrt() / molecule_radius_i).exp()
-    smooth_distance_function = -1 * sigma_molecule * t.sum().log()
+    molecule_radius_i = LazyTensor(molecule_radius[:,None,None])
+    t = -D_ij.sqrt() / molecule_radius_i
+    smooth_distance_function = -1 * sigma_molecule * t.exp().sum().log()
     return smooth_distance_function
 
 
@@ -57,7 +57,6 @@ class MoleculeAtomsToPointNormal:
         :return:
         torch.Tensor (N*D, coord_dim) The coordination for the sampling point.
         """
-        # !TODO: verify the theta distance is suitable for the z sampling.
         n_atoms, coord_dim = self.atoms.shape
         z = self.atoms[:, None, :] + 10 * self.theta_distance * torch.randn(n_atoms, self.B, coord_dim)
         z = z.view(-1, coord_dim)
@@ -66,29 +65,28 @@ class MoleculeAtomsToPointNormal:
         z = z.detach().contiguous()
         return atoms, z
 
-    def descend(self, atoms, z, smoothness=0.01, r=1.05, ite=4):
+    def descend(self, atoms, z, smoothness=1., r=1.05, ite=4, alpha=0.99):
         """
         update the atom neighborhood vector of the atoms based on the SDF loss
-
         :param atoms: torch.Tensor, the coordinates of the atoms.
         :param z: torch.Tensor, the coordinates of the neighborhoods atoms.
         :param smoothness: float, the smoothing constant.
         :param r: float, the smoothing distance of the surface
         :param ite: int, the number of the iterations.
-
+        :param alpha: float: the learning rate decay constant.
         :return:
         z, torch.Tensor, the updated coordinate vectors for the neighborhoods atoms
         """
         # To set the z's grad True
         if z.is_leaf:
-            z.require_grad = True
+            z.requires_grad = True
         # Update the coordinates of the neighborhoods atoms based on gradient backward.
         # The number of the iterations is 4.
         for ite_i in range(ite):
             smooth_dist = soft_distance(atoms, z, self.atomtype, smoothness=smoothness)
-            dist_loss = 0.5 * ((smooth_dist - r) ** 2).sum()
+            dist_loss = 0.001 * ((smooth_dist - r) ** 2).sum()
             grad = torch.autograd.grad(dist_loss, z)[0]
-            z -= 0.5 * grad
+            z -= 10 * alpha**ite_i * grad
         return z
 
     def cleaning(self):
