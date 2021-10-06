@@ -33,6 +33,7 @@ def conformation_generation(smi, force_field_optimization=True, RmsThresh=0.5, n
     conformers_list = list(mol.GetConformers())
     mol_clone = Chem.Mol(mol)
     mol_clone.RemoveAllConformers()
+    idxs = []
     for idx, conformer in enumerate(conformers_list):
         for i in range(idx + 1, len(conformers_list)):
             distance = np.sqrt(
@@ -42,8 +43,9 @@ def conformation_generation(smi, force_field_optimization=True, RmsThresh=0.5, n
                 break
         else:
             mol_clone.AddConformer(conformer)
+            idxs.append(idx)
     del mol
-    return mol_clone
+    return mol_clone, idxs
 
 
 def get_mol_type_one_hot(mol):
