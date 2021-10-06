@@ -29,7 +29,7 @@ def soft_distance(x, y, atomtype, smoothness=0.01):
     molecule_radius = torch.sum(smoothness * atomtype * atom_radius, dim=1, keepdim=False)
     sigma_molecule = ((-1 * D_ij.sqrt()).exp() * molecule_radius).sum(0) / \
                      ((-1 * D_ij.sqrt()).exp()).sum(0)
-    molecule_radius_i = LazyTensor(molecule_radius[:,None,None])
+    molecule_radius_i = LazyTensor(molecule_radius[:, None, None])
     t = -D_ij.sqrt() / molecule_radius_i
     smooth_distance_function = -1 * sigma_molecule * t.exp().sum().log()
     return smooth_distance_function
@@ -86,7 +86,7 @@ class MoleculeAtomsToPointNormal:
             smooth_dist = soft_distance(atoms, z, self.atomtype, smoothness=smoothness)
             dist_loss = 0.001 * ((smooth_dist - r) ** 2).sum()
             grad = torch.autograd.grad(dist_loss, z)[0]
-            z -= 10 * alpha**ite_i * grad
+            z -= 10 * alpha ** ite_i * grad
         return z
 
     def cleaning(self):
