@@ -30,7 +30,7 @@ def soft_distance(x, y, atomtype, smoothness=0.01):
     sigma_molecule = (((-1 * D_ij.sqrt()).exp() * molecule_radius).sum(0) / ((-1 * D_ij.sqrt()).exp()).sum(0))
     molecule_radius_i = LazyTensor(molecule_radius[:, None, None])
     t = -1 * D_ij.sqrt() / molecule_radius_i
-    smooth_distance_function = -1 * sigma_molecule * t.exp().sum().log()
+    smooth_distance_function = -1 * sigma_molecule * t.exp().sum(0).log()
     return smooth_distance_function
 
 
