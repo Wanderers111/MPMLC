@@ -9,10 +9,10 @@ from pykeops.torch import LazyTensor
 def soft_distance(x, y, atomtype, smoothness=0.01):
     """
 
-    :param smoothness:
-    :param x:
-    :param y:
-    :param atomtype:
+    :param smoothness: float, the smoothing constant for the distance calculation.
+    :param x: torch.Tensor, the coordinates for the atoms.
+    :param y: torch.Tensor, the coordinates for the neighborhoods for the atoms.
+    :param atomtype: torch.LongTensor,
     :return:
     """
     # Return the distances between the atoms and the neighborhood points
@@ -36,7 +36,7 @@ def soft_distance(x, y, atomtype, smoothness=0.01):
 
 
 class MoleculeAtomsToPointNormal:
-    def __init__(self, atoms, theta_distance=1.0, B=100, r=1.05, atomtype=None):
+    def __init__(self, atoms, atomtype, theta_distance=1.0, B=100, r=2.05, smoothness=0.1):
         """
         A class to convert the atoms of a molecule to point normal surface.
         :param atoms: torch.Tensor, (N * 3) tensor represents the coordinates of the molecule.
@@ -44,12 +44,14 @@ class MoleculeAtomsToPointNormal:
         :param theta_distance: float, the variance distance (A) of the normal sampling of the neighborhood points.
         :param B: int, the number of the sampling points.
         :param r: float, the radius of the level set surface.
+        :param smoothness: float, the smooth constant for SDF calcuation.
         """
         self.atoms = atoms
         self.atomtype = atomtype
         self.theta_distance = theta_distance
         self.B = B
         self.r = r
+        self.smoothness = smoothness
 
     def sampling(self):
         """
@@ -65,15 +67,12 @@ class MoleculeAtomsToPointNormal:
         z = z.detach().contiguous()
         return atoms, z
 
-    def descend(self, atoms, z, smoothness=1., r=1.05, ite=4, alpha=0.99):
+    def descend(self, atoms, z, ite=100):
         """
         update the atom neighborhood vector of the atoms based on the SDF loss
         :param atoms: torch.Tensor, the coordinates of the atoms.
         :param z: torch.Tensor, the coordinates of the neighborhoods atoms.
-        :param smoothness: float, the smoothing constant.
-        :param r: float, the smoothing distance of the surface
         :param ite: int, the number of the iterations.
-        :param alpha: float: the learning rate decay constant.
         :return:
         z, torch.Tensor, the updated coordinate vectors for the neighborhoods atoms
         """
@@ -83,10 +82,10 @@ class MoleculeAtomsToPointNormal:
         # Update the coordinates of the neighborhoods atoms based on gradient backward.
         # The number of the iterations is 4.
         for ite_i in range(ite):
-            smooth_dist = soft_distance(atoms, z, self.atomtype, smoothness=smoothness)
-            dist_loss = 0.001 * ((smooth_dist - r) ** 2).sum()
+            smooth_dist = soft_distance(atoms, z, self.atomtype, smoothness=self.smoothness)
+            dist_loss = 0.001 * ((smooth_dist - self.r) ** 2).sum()
             grad = torch.autograd.grad(dist_loss, z)[0]
-            z -= 10 * alpha ** ite_i * grad
+            z = z - 0.5 * grad
         return z
 
     def cleaning(self):
