@@ -36,7 +36,7 @@ def soft_distance(x, y, atomtype, smoothness=0.01):
 
 
 class MoleculeAtomsToPointNormal:
-    def __init__(self, atoms, atomtype, theta_distance=1.0, B=100, r=2.05, smoothness=0.1):
+    def __init__(self, atoms, atomtype, theta_distance=1.0, B=100, r=2.05, smoothness=0.1, variance=0.2):
         """
         A class to convert the atoms of a molecule to point normal surface.
         :param atoms: torch.Tensor, (N * 3) tensor represents the coordinates of the molecule.
@@ -52,6 +52,7 @@ class MoleculeAtomsToPointNormal:
         self.B = B
         self.r = r
         self.smoothness = smoothness
+        self.variance = variance
 
     def sampling(self):
         """
