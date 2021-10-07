@@ -27,10 +27,9 @@ def soft_distance(x, y, atomtype, smoothness=0.01):
     atom_radius = atom_radius / atom_radius.min()
     # Get the normalized radius of the batch atoms.
     molecule_radius = torch.sum(smoothness * atomtype * atom_radius, dim=1, keepdim=False)
-    sigma_molecule = ((-1 * D_ij.sqrt()).exp() * molecule_radius).sum(0) / \
-                     ((-1 * D_ij.sqrt()).exp()).sum(0)
+    sigma_molecule = (((-1 * D_ij.sqrt()).exp() * molecule_radius).sum(0) / ((-1 * D_ij.sqrt()).exp()).sum(0))
     molecule_radius_i = LazyTensor(molecule_radius[:, None, None])
-    t = -D_ij.sqrt() / molecule_radius_i
+    t = -1 * D_ij.sqrt() / molecule_radius_i
     smooth_distance_function = -1 * sigma_molecule * t.exp().sum().log()
     return smooth_distance_function
 
