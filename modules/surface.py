@@ -88,25 +88,25 @@ class MoleculeAtomsToPointNormal:
             z = z - 0.5 * grad
         return z
 
-    @staticmethod
-    def cleaning(atoms, z):
-        """
-        Clean the points based on the threshold < 1.05 A
-        :param atoms: torch.Tensor, The coordinates of the atoms.
-        :param z: torch.Tensor, The coordinates of the neighborhood point.
-        :return:
-        torch.Tensor, the final coordinates of the points after being cleaned.
-        """
-        D_ij_final = ((z[None, :, :] - atoms[:, None, :]) ** 2).sum(-1).sqrt()
-        mask = (D_ij_final < 1.05).nonzero()[:, 1]
-        mask_i = torch.unique(mask)
-        idx = torch.arange(z.shape[0], device=mask_i.device)
-        superset = torch.cat([mask_i, idx])
-        uniset, count = superset.unique(return_counts=True)
-        mask = (count == 1)
-        result = uniset.masked_select(mask)
-        z_final = z[result]
-        return z_final
+    # @staticmethod
+    # def cleaning(atoms, z):
+    #     """
+    #     Clean the points based on the threshold < 1.05 A
+    #     :param atoms: torch.Tensor, The coordinates of the atoms.
+    #     :param z: torch.Tensor, The coordinates of the neighborhood point.
+    #     :return:
+    #     torch.Tensor, the final coordinates of the points after being cleaned.
+    #     """
+    #     D_ij_final = ((z[None, :, :] - atoms[:, None, :]) ** 2).sum(-1).sqrt()
+    #     mask = (D_ij_final < 1.05).nonzero()[:, 1]
+    #     mask_i = torch.unique(mask)
+    #     idx = torch.arange(z.shape[0], device=mask_i.device)
+    #     superset = torch.cat([mask_i, idx])
+    #     uniset, count = superset.unique(return_counts=True)
+    #     mask = (count == 1)
+    #     result = uniset.masked_select(mask)
+    #     z_final = z[result]
+    #     return z_final
 
     def sub_sampling(self):
         return

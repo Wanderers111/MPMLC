@@ -29,7 +29,11 @@ def conformation_generation(smi, force_field_optimization=True, RmsThresh=0.5, n
     rms_list = []
     AllChem.AlignMolConformers(mol, RMSlist=rms_list)
     if force_field_optimization:
-        AllChem.MMFFOptimizeMolecule(mol)
+        try:
+            AllChem.MMFFOptimizeMolecule(mol)
+        except ValueError:
+            AllChem.EmbedMultipleConfs(mol, numConfs=numConfs, maxAttempts=conformation_kwargs['maxAttempts'],
+                                       useRandomCoords=True)
     conformers_list = list(mol.GetConformers())
     mol_clone = Chem.Mol(mol)
     mol_clone.RemoveAllConformers()
