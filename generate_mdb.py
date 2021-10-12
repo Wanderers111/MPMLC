@@ -5,7 +5,7 @@ from multiprocessing.pool import Pool
 import time
 
 time1 = time.time()
-table = pd.read_csv('./zinc15_druglike_clean_canonical_max60.smi', header=None)
+table = pd.read_table('./ChEMBL.txt', header=None)
 smis = table[0].values.tolist()
 processing = Pool(10, maxtasksperchild=1000)
 zlibs_list = []
