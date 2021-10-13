@@ -10,7 +10,7 @@ smis = table[0].values.tolist()
 
 t = 0
 smis_len = len(smis)
-for i in range(smis_len, 100000):
+for i in range(0, smis_len, 100000):
     processing = Pool(30, maxtasksperchild=1000)
     zlibs_list = []
     for smi_i in smis[i: min(i+100000, smis_len)]:
