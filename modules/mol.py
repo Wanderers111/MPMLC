@@ -22,7 +22,11 @@ def conformation_generation(smi, force_field_optimization=True, RmsThresh=0.5, n
     mol: Rdkit.mol object.
     """
     mol = Chem.MolFromSmiles(smi)
-    mol = Chem.AddHs(mol)
+    try:
+        mol = Chem.AddHs(mol)
+        Chem.SanitizeMol(mol)
+    except Exception:
+        mol = mol
     AllChem.EmbedMultipleConfs(mol, numConfs=numConfs, maxAttempts=conformation_kwargs['maxAttempts'],
                                useExpTorsionAnglePrefs=conformation_kwargs['useExpTorsionAnglePrefs'],
                                useBasicKnowledge=conformation_kwargs['useBasicKnowledge'])
@@ -34,6 +38,7 @@ def conformation_generation(smi, force_field_optimization=True, RmsThresh=0.5, n
         except ValueError:
             AllChem.EmbedMultipleConfs(mol, numConfs=numConfs, maxAttempts=conformation_kwargs['maxAttempts'],
                                        useRandomCoords=True)
+            AllChem.MMFFOptimizeMolecule(mol)
     conformers_list = list(mol.GetConformers())
     mol_clone = Chem.Mol(mol)
     mol_clone.RemoveAllConformers()
