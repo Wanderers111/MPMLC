@@ -26,3 +26,17 @@ def generate_and_encode(smi):
     del mol
     del mol_blocks_list
     return zlib_s
+
+
+def decode(block):
+    """
+
+    :param block:
+    :return:
+    """
+    string = zlib.decompress(block)
+    string = string.decode()
+    mols = []
+    for string_i in string.split('END\n\n'):
+        mols.append(Chem.MolFromMolBlock(string_i+'END\n\n'))
+    return mols
