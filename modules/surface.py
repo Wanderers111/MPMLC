@@ -4,6 +4,7 @@ The script is written from the dMaSIF, which is written by
 
 import torch
 from pykeops.torch import LazyTensor
+from pykeops.torch.cluster import grid_cluster
 
 
 def soft_distance(x, y, atomtype, smoothness=0.01):
@@ -85,31 +86,42 @@ class MoleculeAtomsToPointNormal:
             smooth_dist = soft_distance(atoms, z, self.atomtype, smoothness=self.smoothness)
             dist_loss = 0.001 * ((smooth_dist - self.r) ** 2).sum()
             grad = torch.autograd.grad(dist_loss, z)[0]
-            z = z - 0.5 * grad
+            z = z - 10 * grad
         return z
 
-    # @staticmethod
-    # def cleaning(atoms, z):
-    #     """
-    #     Clean the points based on the threshold < 1.05 A
-    #     :param atoms: torch.Tensor, The coordinates of the atoms.
-    #     :param z: torch.Tensor, The coordinates of the neighborhood point.
-    #     :return:
-    #     torch.Tensor, the final coordinates of the points after being cleaned.
-    #     """
-    #     D_ij_final = ((z[None, :, :] - atoms[:, None, :]) ** 2).sum(-1).sqrt()
-    #     mask = (D_ij_final < 1.05).nonzero()[:, 1]
-    #     mask_i = torch.unique(mask)
-    #     idx = torch.arange(z.shape[0], device=mask_i.device)
-    #     superset = torch.cat([mask_i, idx])
-    #     uniset, count = superset.unique(return_counts=True)
-    #     mask = (count == 1)
-    #     result = uniset.masked_select(mask)
-    #     z_final = z[result]
-    #     return z_final
+    @staticmethod
+    def cleaning(atoms, z):
+        """
+        Clean the points based on the threshold < 1.05 A
+        :param atoms: torch.Tensor, The coordinates of the atoms.
+        :param z: torch.Tensor, The coordinates of the neighborhood point.
+        :return:
+        torch.Tensor, the final coordinates of the points after being cleaned.
+        """
+        D_ij_final = ((z[None, :, :] - atoms[:, None, :]) ** 2).sum(-1).sqrt()
+        mask = (D_ij_final < 1.05).nonzero()[:, 1]
+        mask_i = torch.unique(mask)
+        idx = torch.arange(z.shape[0], device=mask_i.device)
+        superset = torch.cat([mask_i, idx])
+        uniset, count = superset.unique(return_counts=True)
+        mask = (count == 1)
+        result = uniset.masked_select(mask)
+        z_final = z[result]
+        return z_final
 
-    def sub_sampling(self):
-        return
+    @staticmethod
+    def sub_sampling(z, solution=0.31):
+        """
+        To sub sample the cloud point of the molecular surface.
+        :param solution:
+        :param z: torch.FloatTensor, the dimension of the molecule point surface.
+        :return:
+        """
+        grid_class = grid_cluster(z, solution).long()
+        unique = torch.unique(grid_class)
+        compatiable = (grid_class[:, None] == unique).long()
+        point_index = compatiable.max(axis=0).indices
+        return z[point_index]
 
     def normals(self):
         return
