@@ -70,4 +70,4 @@ def to_point_cloud(mol, B=500, theta_distance=1.0, r=2.05, smoothness=0.1, varia
     z = point_processer.descend(atoms, z, ite=ite)
     z = point_processer.cleaning(atoms, z)
     z = point_processer.sub_sampling(z)
-    return z
+    return z.detach()
