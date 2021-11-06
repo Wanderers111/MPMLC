@@ -2,6 +2,7 @@ import zlib
 
 from rdkit import Chem
 from rdkit.Chem.PropertyMol import PropertyMol
+import torch
 
 from modules.mol import conformation_generation, get_mol_coordinate, get_mol_type_one_hot
 
@@ -60,6 +61,8 @@ def to_point_cloud(mol, B=500, theta_distance=1.0, r=2.05, smoothness=0.1, varia
     conformer = mol.GetConformer()
     atoms = get_mol_coordinate(conformer)
     atomtype = get_mol_type_one_hot(mol)
+    atomtype = torch.from_numpy(atomtype).cuda()
+    atoms = torch.from_numpy(atoms).cuda()
     point_processer = MoleculeAtomsToPointNormal(atoms=atoms, atomtype=atomtype, B=B, r=r,
                                                  smoothness=smoothness, variance=variance,
                                                  theta_distance=theta_distance)
