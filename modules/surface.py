@@ -36,7 +36,7 @@ def soft_distance(x, y, atomtype, smoothness=0.01):
 
 
 class MoleculeAtomsToPointNormal:
-    def __init__(self, atoms, atomtype, theta_distance=1.0, B=500, r=2.05, smoothness=0.1, variance=0.2):
+    def __init__(self, atoms, atomtype, theta_distance=1.0, B=500, r=2.05, smoothness=0.1, variance=0.15):
         """
         A class to convert the atoms of a molecule to point normal surface.
         :param atoms: torch.Tensor, (N * 3) tensor represents the coordinates of the molecule.
@@ -45,6 +45,7 @@ class MoleculeAtomsToPointNormal:
         :param B: int, the number of the sampling points.
         :param r: float, the radius of the level set surface.
         :param smoothness: float, the smooth constant for SDF calculation.
+        :param variance: float, the distance to process.
         """
         self.atoms = atoms
         self.atomtype = atomtype
@@ -89,8 +90,7 @@ class MoleculeAtomsToPointNormal:
             z = z - 10 * grad
         return z
 
-    @staticmethod
-    def cleaning(atoms, z):
+    def cleaning(self, atoms, z):
         """
         Clean the points based on the threshold < 1.05 A
         :param atoms: torch.Tensor, The coordinates of the atoms.
@@ -99,7 +99,7 @@ class MoleculeAtomsToPointNormal:
         torch.Tensor, the final coordinates of the points after being cleaned.
         """
         D_ij_final = ((z[None, :, :] - atoms[:, None, :]) ** 2).sum(-1).sqrt()
-        mask = (D_ij_final < 1.05).nonzero()[:, 1]
+        mask = (D_ij_final < self.variance).nonzero()[:, 1]
         mask_i = torch.unique(mask)
         idx = torch.arange(z.shape[0], device=mask_i.device)
         superset = torch.cat([mask_i, idx])
