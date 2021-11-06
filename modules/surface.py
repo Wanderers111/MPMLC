@@ -113,7 +113,7 @@ class MoleculeAtomsToPointNormal:
     def sub_sampling(z, solution=0.31):
         """
         To sub sample the cloud point of the molecular surface.
-        :param solution:
+        :param solution: float, the solution of the point cloud.
         :param z: torch.FloatTensor, the dimension of the molecule point surface.
         :return:
         """
