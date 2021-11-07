@@ -8,7 +8,7 @@ conformation_kwargs = {
     'useExpTorsionAnglePrefs': True,
     'useBasicKnowledge': True,
 }
-atom_id = [6, 1, 8, 7, 15, 16, 34, 17, 9, 35]
+atom_id = [6, 1, 8, 7, 15, 16, 34, 17, 9, 35, 53]
 
 
 def conformation_generation(smi, force_field_optimization=True, RmsThresh=0.5, numConfs=100):

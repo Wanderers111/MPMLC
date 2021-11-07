@@ -24,7 +24,7 @@ def soft_distance(x, y, atomtype, smoothness=0.01):
     # !TODO: Divide the batches, using block-diagonal sparsity
     # Get the atom radius and normalizing the atom radius.
     # The CSD atom radius for Csp, Csp2, Csp3, H, O, N, P, S, Se, Cl, F, Br. Dalton Transactions 2832-2838
-    atom_radius = torch.cuda.FloatTensor([69, 73, 76, 31, 66, 71, 107, 105, 120, 102, 57, 120], device=x.device)
+    atom_radius = torch.cuda.FloatTensor([69, 73, 76, 31, 66, 71, 107, 105, 120, 102, 57, 120, 131], device=x.device)
     atom_radius = atom_radius / atom_radius.min()
     # Get the normalized radius of the batch atoms.
     molecule_radius = torch.sum(smoothness * atomtype * atom_radius, dim=1, keepdim=False)
@@ -125,7 +125,7 @@ class MoleculeAtomsToPointNormal:
         z_1 = torch.cat((z, torch.ones_like(z[:, 1])[:, None]), 1)
         D = z_1.shape[1]
         points = torch.zeros_like(z_1[:grid_class_labels])
-        points.scatter_add_(0, grid_class[:,None].repeat(1, D), z_1)
+        points.scatter_add_(0, grid_class[:, None].repeat(1, D), z_1)
         return (points[:, :3] / points[:, 3:]).contiguous()
 
     def normals(self):
