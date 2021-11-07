@@ -88,7 +88,7 @@ class MoleculeAtomsToPointNormal:
             dist_loss = 0.001 * ((smooth_dist - self.r) ** 2).sum()
             grad = torch.autograd.grad(dist_loss, z)[0]
             z = z - 10 * grad
-        return z
+        return z.detach().contigous()
 
     def cleaning(self, atoms, z):
         """
@@ -107,21 +107,23 @@ class MoleculeAtomsToPointNormal:
         mask = (count == 1)
         result = uniset.masked_select(mask)
         z_final = z[result]
-        return z_final
+        return z_final.contigous()
 
     @staticmethod
     def sub_sampling(z, solution=0.31):
         """
-        To sub sample the cloud point of the molecular surface.
+        To sub sample the cloud point of the molecular surface. The algorithm is to cluster the points and calculate
+        the mean value of each cluster.
         :param solution: float, the solution of the point cloud.
         :param z: torch.FloatTensor, the dimension of the molecule point surface.
         :return:
+        The points after cluster.
         """
         grid_class = grid_cluster(z, solution).long()
-        unique = torch.unique(grid_class)
-        compatiable = (grid_class[:, None] == unique).long()
-        point_index = compatiable.max(axis=0).indices
-        return z[point_index]
+        grid_class_labels = grid_class.max() + 1
+        z_1 = torch.cat((z, torch.ones_like(z[:, 1])[:, None]), 1)
+        points = torch.zeros_like(z_1[:grid_class_labels])
+        return (points[:, :3] / points[:, 3:]).contigous()
 
     def normals(self):
         return
