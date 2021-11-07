@@ -57,12 +57,12 @@ class MoleculeAtomsToPointNormal:
 
     def sampling(self):
         """
-        Sampling B random points in the neighborhood of the atoms of our atoms.
+        SAMPLING: Sampling B random points in the neighborhood of the atoms of our atoms.
         :return:
         torch.Tensor (N*D, coord_dim) The coordination for the sampling point.
         """
         n_atoms, coord_dim = self.atoms.shape
-        z = self.atoms[:, None, :] + 10 * self.theta_distance * torch.randn(n_atoms, self.B, coord_dim)
+        z = self.atoms[:, None, :] + 10 * self.theta_distance * torch.randn(n_atoms, self.B, coord_dim, device='cuda')
         z = z.view(-1, coord_dim)
         # Make the tensor's store continuous in the device
         atoms = self.atoms.detach().contiguous()
@@ -71,7 +71,7 @@ class MoleculeAtomsToPointNormal:
 
     def descend(self, atoms, z, ite=100):
         """
-        update the atom neighborhood vector of the atoms based on the SDF loss
+        DESCEND: Update the atom neighborhood vector of the atoms based on the SDF loss
         :param atoms: torch.Tensor, the coordinates of the atoms.
         :param z: torch.Tensor, the coordinates of the neighborhoods atoms.
         :param ite: int, the number of the iterations.
@@ -88,11 +88,11 @@ class MoleculeAtomsToPointNormal:
             dist_loss = 0.001 * ((smooth_dist - self.r) ** 2).sum()
             grad = torch.autograd.grad(dist_loss, z)[0]
             z = z - 10 * grad
-        return z.detach().contigous()
+        return z.detach().contiguous()
 
     def cleaning(self, atoms, z):
         """
-        Clean the points based on the threshold < 1.05 A
+        Cleaning: Clean the points based on the threshold < 1.05 A
         :param atoms: torch.Tensor, The coordinates of the atoms.
         :param z: torch.Tensor, The coordinates of the neighborhood point.
         :return:
@@ -107,12 +107,13 @@ class MoleculeAtomsToPointNormal:
         mask = (count == 1)
         result = uniset.masked_select(mask)
         z_final = z[result]
-        return z_final.contigous()
+        return z_final.contiguous()
 
     @staticmethod
     def sub_sampling(z, solution=0.31):
         """
-        To sub sample the cloud point of the molecular surface. The algorithm is to cluster the points and calculate
+        SUBSAMPLING: To sub sample the cloud point of the molecular surface.
+                    The algorithm is to cluster the points and calculate
         the mean value of each cluster.
         :param solution: float, the solution of the point cloud.
         :param z: torch.FloatTensor, the dimension of the molecule point surface.
@@ -123,7 +124,7 @@ class MoleculeAtomsToPointNormal:
         grid_class_labels = grid_class.max() + 1
         z_1 = torch.cat((z, torch.ones_like(z[:, 1])[:, None]), 1)
         points = torch.zeros_like(z_1[:grid_class_labels])
-        return (points[:, :3] / points[:, 3:]).contigous()
+        return (points[:, :3] / points[:, 3:]).contiguous()
 
     def normals(self):
         return
