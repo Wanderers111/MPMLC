@@ -123,7 +123,9 @@ class MoleculeAtomsToPointNormal:
         grid_class = grid_cluster(z, solution).long()
         grid_class_labels = grid_class.max() + 1
         z_1 = torch.cat((z, torch.ones_like(z[:, 1])[:, None]), 1)
+        D = z_1.shape[1]
         points = torch.zeros_like(z_1[:grid_class_labels])
+        points.scatter_add_(0, grid_class[:,None].repeat(1, D), z_1)
         return (points[:, :3] / points[:, 3:]).contiguous()
 
     def normals(self):
