@@ -109,8 +109,7 @@ class MoleculeAtomsToPointNormal:
         z_final = z[result]
         return z_final.contiguous()
 
-    @staticmethod
-    def sub_sampling(z, solution=0.31):
+    def sub_sampling(self, z, solution=0.31):
         """
         SUBSAMPLING: To sub sample the cloud point of the molecular surface.
                     The algorithm is to cluster the points and calculate
@@ -128,5 +127,14 @@ class MoleculeAtomsToPointNormal:
         points.scatter_add_(0, grid_class[:, None].repeat(1, D), z_1)
         return (points[:, :3] / points[:, 3:]).contiguous()
 
-    def normals(self):
-        return
+    def normals(self, points):
+        """
+
+        :param points:
+        :return:
+        """
+        dist_molecule = soft_distance(self.atoms, points, self.atomtype)
+        if points.is_leaf:
+            points.require_grads = True
+        grad_points = torch.autograd.grad(dist_molecule, points)[0]
+        return grad_points
